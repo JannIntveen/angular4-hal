@@ -101,6 +101,30 @@ export abstract class Resource {
         }
     }
 
+    private createUriListFromResourceArray<T extends Resource>(resources: T[]): String {
+        let uriList : String = new String();
+
+        for (let i = 0; i < resources.length; i++) {
+            if (i != 0) {
+                uriList = uriList.concat("\n");
+            }
+            uriList = uriList.concat(resources[i]._links.self.href);
+        }
+        return uriList;
+    }
+
+    // Set collection of related resources
+    public setRelationArray<T extends Resource>(relation: string, resources: T[]): Observable<any> {
+        if (this.existRelationLink(relation)) {
+            let header = ResourceHelper.headers.append('Content-Type', 'text/uri-list');
+            let payload = this.createUriListFromResourceArray(resources);
+            
+            return ResourceHelper.getHttp().put(ResourceHelper.getProxy(this.getRelationLinkHref(relation)), payload, {headers: header});
+        } else {
+            return observableThrowError('no relation found');
+        }
+    }
+
     public getProjection<T extends Resource>(type: { new(): T },
                                              resource: string,
                                              id: string,
